@@ -33,3 +33,27 @@
         service: vpnc.service
         daemon_reload: yes
         state: restarted
+      failed_when: false
+      register: vpnc_restart
+
+    - name: Output vpnc_restart
+      debug: var=vpnc_restart
+
+    - name: Debug vpnc service failure
+      block:
+        - name: Get vpnc service status
+          command: systemctl status vpnc.service
+          register: vpnc_status
+          failed_when: false
+          changed_when: false
+        - name: Output vpnc service status
+          debug: var=vpnc_status
+        - name: Get system log
+          command: journalctl -xe
+          register: system_log
+          changed_when: false
+        - name: Output system log
+          debug: var=system_log
+        - name: Fail if vpnc service failed to (re)start
+          fail: msg="vpnc service failed to start"
+      when: not vpnc_restart is changed
